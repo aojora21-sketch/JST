@@ -1,0 +1,1390 @@
+<!doctype html>
+<html lang="ko">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
+  <title>히라가나 특훈</title>
+  <style>
+    html,
+    body {
+      margin: 0;
+      height: 100%;
+      background: #0b0f16;
+      overflow: hidden;
+    }
+
+    canvas {
+      display: block;
+      width: 100vw;
+      height: 100vh;
+      touch-action: none;
+    }
+
+    body {
+      user-select: none;
+      -webkit-user-select: none;
+    }
+  </style>
+</head>
+
+<body>
+  <canvas id="c"></canvas>
+  <script>
+    (() => {
+      // ---------------------------
+      // 1) DATA
+      // ---------------------------
+      const HIRA_PAIRS = [
+        { hira: "あ", hangul: "아", romaji: "a" },
+        { hira: "い", hangul: "이", romaji: "i" },
+        { hira: "う", hangul: "우", romaji: "u" },
+        { hira: "え", hangul: "에", romaji: "e" },
+        { hira: "お", hangul: "오", romaji: "o" },
+
+        { hira: "か", hangul: "카", romaji: "ka" },
+        { hira: "き", hangul: "키", romaji: "ki" },
+        { hira: "く", hangul: "쿠", romaji: "ku" },
+        { hira: "け", hangul: "케", romaji: "ke" },
+        { hira: "こ", hangul: "코", romaji: "ko" },
+
+        { hira: "さ", hangul: "사", romaji: "sa" },
+        { hira: "し", hangul: "시", romaji: "shi" },
+        { hira: "す", hangul: "스", romaji: "su" },
+        { hira: "せ", hangul: "세", romaji: "se" },
+        { hira: "そ", hangul: "소", romaji: "so" },
+
+        { hira: "た", hangul: "타", romaji: "ta" },
+        { hira: "ち", hangul: "치", romaji: "chi" },
+        { hira: "つ", hangul: "츠", romaji: "tsu" },
+        { hira: "て", hangul: "테", romaji: "te" },
+        { hira: "と", hangul: "토", romaji: "to" },
+
+        { hira: "な", hangul: "나", romaji: "na" },
+        { hira: "に", hangul: "니", romaji: "ni" },
+        { hira: "ぬ", hangul: "누", romaji: "nu" },
+        { hira: "ね", hangul: "네", romaji: "ne" },
+        { hira: "の", hangul: "노", romaji: "no" },
+
+        { hira: "は", hangul: "하", romaji: "ha" },
+        { hira: "ひ", hangul: "히", romaji: "hi" },
+        { hira: "ふ", hangul: "후", romaji: "fu" },
+        { hira: "へ", hangul: "헤", romaji: "he" },
+        { hira: "ほ", hangul: "호", romaji: "ho" },
+
+        { hira: "ま", hangul: "마", romaji: "ma" },
+        { hira: "み", hangul: "미", romaji: "mi" },
+        { hira: "む", hangul: "무", romaji: "mu" },
+        { hira: "め", hangul: "메", romaji: "me" },
+        { hira: "も", hangul: "모", romaji: "mo" },
+
+        { hira: "や", hangul: "야", romaji: "ya" },
+        { hira: "ゆ", hangul: "유", romaji: "yu" },
+        { hira: "よ", hangul: "요", romaji: "yo" },
+
+        { hira: "ら", hangul: "라", romaji: "ra" },
+        { hira: "り", hangul: "리", romaji: "ri" },
+        { hira: "る", hangul: "루", romaji: "ru" },
+        { hira: "れ", hangul: "레", romaji: "re" },
+        { hira: "ろ", hangul: "로", romaji: "ro" },
+
+        { hira: "わ", hangul: "와", romaji: "wa" },
+        { hira: "ん", hangul: "응", romaji: "n" },
+      ];
+
+      const KATA_PAIRS = [
+        { hira: "ア", hangul: "아", romaji: "a" },
+        { hira: "イ", hangul: "이", romaji: "i" },
+        { hira: "ウ", hangul: "우", romaji: "u" },
+        { hira: "エ", hangul: "에", romaji: "e" },
+        { hira: "オ", hangul: "오", romaji: "o" },
+
+        { hira: "カ", hangul: "카", romaji: "ka" },
+        { hira: "キ", hangul: "키", romaji: "ki" },
+        { hira: "ク", hangul: "쿠", romaji: "ku" },
+        { hira: "ケ", hangul: "케", romaji: "ke" },
+        { hira: "コ", hangul: "코", romaji: "ko" },
+
+        { hira: "サ", hangul: "사", romaji: "sa" },
+        { hira: "シ", hangul: "시", romaji: "shi" },
+        { hira: "ス", hangul: "스", romaji: "su" },
+        { hira: "セ", hangul: "세", romaji: "se" },
+        { hira: "ソ", hangul: "소", romaji: "so" },
+
+        { hira: "タ", hangul: "타", romaji: "ta" },
+        { hira: "チ", hangul: "치", romaji: "chi" },
+        { hira: "ツ", hangul: "츠", romaji: "tsu" },
+        { hira: "テ", hangul: "테", romaji: "te" },
+        { hira: "ト", hangul: "토", romaji: "to" },
+
+        { hira: "ナ", hangul: "나", romaji: "na" },
+        { hira: "ニ", hangul: "니", romaji: "ni" },
+        { hira: "ヌ", hangul: "누", romaji: "nu" },
+        { hira: "ネ", hangul: "네", romaji: "ne" },
+        { hira: "ノ", hangul: "노", romaji: "no" },
+
+        { hira: "ハ", hangul: "하", romaji: "ha" },
+        { hira: "ヒ", hangul: "히", romaji: "hi" },
+        { hira: "フ", hangul: "후", romaji: "fu" },
+        { hira: "ヘ", hangul: "헤", romaji: "he" },
+        { hira: "ホ", hangul: "호", romaji: "ho" },
+
+        { hira: "マ", hangul: "마", romaji: "ma" },
+        { hira: "ミ", hangul: "미", romaji: "mi" },
+        { hira: "ム", hangul: "무", romaji: "mu" },
+        { hira: "メ", hangul: "메", romaji: "me" },
+        { hira: "モ", hangul: "모", romaji: "mo" },
+
+        { hira: "ヤ", hangul: "야", romaji: "ya" },
+        { hira: "ユ", hangul: "유", romaji: "yu" },
+        { hira: "ヨ", hangul: "요", romaji: "yo" },
+
+        { hira: "ラ", hangul: "라", romaji: "ra" },
+        { hira: "リ", hangul: "리", romaji: "ri" },
+        { hira: "ル", hangul: "루", romaji: "ru" },
+        { hira: "レ", hangul: "레", romaji: "re" },
+        { hira: "ロ", hangul: "로", romaji: "ro" },
+
+        { hira: "ワ", hangul: "와", romaji: "wa" },
+        { hira: "ン", hangul: "응", romaji: "n" },
+      ];
+
+      // Active dataset (swapped by mode)
+      let gameMode = "hira";
+      let activePairs = HIRA_PAIRS;
+      let hiraToPair = new Map(HIRA_PAIRS.map(p => [p.hira, p]));
+      let hangulToPair = new Map(HIRA_PAIRS.map(p => [p.hangul, p]));
+
+      function switchMode(mode) {
+        gameMode = mode;
+        activePairs = (mode === "kata") ? KATA_PAIRS : HIRA_PAIRS;
+        hiraToPair = new Map(activePairs.map(p => [p.hira, p]));
+        hangulToPair = new Map(activePairs.map(p => [p.hangul, p]));
+      }
+
+      function randInt(n) { return (Math.random() * n) | 0; }
+      function choice(arr) { return arr[randInt(arr.length)]; }
+      function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
+
+      // ---------------------------
+      // 2) CANVAS
+      // ---------------------------
+      const canvas = document.getElementById("c");
+      const ctx = canvas.getContext("2d", { alpha: false });
+
+      let W = 0, H = 0;
+
+      // Layout: 3:2 (portrait) playfield + bottom control area
+      const layout = {
+        pad: 14,
+        controlH: 180,
+        field: { x: 0, y: 0, w: 0, h: 0 }, // w:h = 2:3
+      };
+
+      // ---------------------------
+      // 3) THEME
+      // ---------------------------
+      const COLOR_BG = "#0b0f16";
+      const COLOR_TEXT = "#e9eef8";
+      const COLOR_TEXT_DIM = "rgba(233,238,248,0.75)";
+      const COLOR_STROKE = "rgba(5,8,12,0.85)";
+      const COLOR_PLAYER_FILL = "#f1f6ff";
+      const COLOR_PLAYER_TEXT = "#141a24";
+      const COLOR_HINT_GREEN = "rgba(168, 255, 120, 0.95)"; // 연두색
+
+      // ---------------------------
+      // 4) GAME STATE
+      // ---------------------------
+      const STATE = { START: "start", PLAY: "play", OVER: "over", DICT: "dict" };
+      let state = STATE.START;
+
+      // Dictionary page state
+      let dictScrollY = 0;
+      let dictMode = "hira"; // which set to show in dictionary
+
+      // World coords inside field rectangle: [0..Fw], [0..Fh]
+      function toScreen(wx, wy) {
+        return { x: layout.field.x + wx, y: layout.field.y + wy };
+      }
+
+      // Player
+      const player = {
+        x: 0, y: 0,
+        vx: 0, vy: 0,        // ✅ 느린 최대속도 + 빠른 반응을 위한 속도 벡터
+        r: 18,
+        speed: 200,          // will be set in layout
+        char: "아",
+
+        invincible: false,
+        blinkT: 0,
+        blinkTotal: 0,
+        blinkCount: 0,
+        blinkMax: 10,
+        blinkInterval: 0.198,
+        blinkShowAlt: false,
+        blinkA: "아",
+        blinkB: "あ",
+      };
+
+      // Joystick
+      const joy = {
+        active: false,
+        pointerId: null,
+        baseX: 0, baseY: 0,
+        knobX: 0, knobY: 0,
+        baseR: 56,
+        knobR: 24,
+        dx: 0, dy: 0,
+        area: { x: 0, y: 0, w: 0, h: 0 }
+      };
+
+      // UI rects for buttons
+      const ui = {
+        startBtn: { x: 0, y: 0, w: 0, h: 0 },
+        helpBtn: { x: 0, y: 0, w: 0, h: 0 },
+        hiraBtn: { x: 0, y: 0, w: 0, h: 0 },
+        kataBtn: { x: 0, y: 0, w: 0, h: 0 },
+        startDictBtn: { x: 0, y: 0, w: 0, h: 0 },
+        helpOpen: false,
+        helpPanel: { x: 0, y: 0, w: 0, h: 0 },
+        // Game over buttons
+        retryBtn: { x: 0, y: 0, w: 0, h: 0 },
+        homeBtn: { x: 0, y: 0, w: 0, h: 0 },
+        overDictBtn: { x: 0, y: 0, w: 0, h: 0 },
+        // Dict page
+        dictHiraTab: { x: 0, y: 0, w: 0, h: 0 },
+        dictKataTab: { x: 0, y: 0, w: 0, h: 0 },
+        dictExitBtn: { x: 0, y: 0, w: 0, h: 0 },
+      };
+
+      // Scale helper (mobile-first)
+      function sp(px) {
+        const k = clamp((layout.field.w || 320) / 320, 0.98, 1.85);
+        return Math.round(px * k);
+      }
+
+      let lives = 3;
+      let score = 0;
+
+      // Difficulty timers
+      let timeAlive = 0; // spawn/max bullets
+      let speedTime = 0; // bullet speed ramp (resets on hit)
+
+      // Hint effect
+      let highlightCorrect = false; // ? eaten => true; reset when correct eaten OR hit/death/restart
+
+      // Bullets
+      // {x,y,vx,vy,text,pair,r,isHint}
+      const bullets = [];
+      let spawnAcc = 0;
+      let spawnRate = 0.8;  // half-ish baseline (will be adjusted in tick)
+      let maxBullets = 90;  // baseline (will be adjusted in tick)
+
+      // Aura (correct eat clears nearby bullets)
+      let auraT = 0;
+      const auraDuration = 0.6;
+      let auraRadius = 120;
+
+      const mistakeLogs = new Map();
+
+      function isPlayerHangul() { return hangulToPair.has(player.char); }
+      function getPlayerPair() { return isPlayerHangul() ? hangulToPair.get(player.char) : hiraToPair.get(player.char); }
+
+      function setRandomPlayerChar(avoidChar = null) {
+        const p = choice(activePairs);
+        const pickHangul = Math.random() < 0.5;
+        const next = pickHangul ? p.hangul : p.hira;
+        player.char = (next === avoidChar) ? (pickHangul ? p.hira : p.hangul) : next;
+      }
+
+      function currentCorrectText() {
+        const pp = getPlayerPair();
+        return isPlayerHangul() ? pp.hira : pp.hangul;
+      }
+
+      function renderOver() {
+        ctx.fillStyle = COLOR_BG;
+        ctx.fillRect(0, 0, W, H);
+
+        ctx.fillStyle = "rgba(255,255,255,0.01)";
+        ctx.fillRect(layout.field.x, layout.field.y, layout.field.w, layout.field.h);
+        renderFieldFrame();
+
+        // Title + score
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillStyle = "rgba(233,238,248,0.95)";
+        // Reduced "Game Over" size
+        ctx.font = `900 ${clamp(sp(24), 20, 32)}px system-ui, -apple-system, "Noto Sans KR", "Noto Sans JP", sans-serif`;
+        ctx.fillText("게임 오버", W / 2, layout.field.y + layout.field.h * 0.15);
+
+        ctx.fillStyle = COLOR_TEXT_DIM;
+        // Increased "Final Score" size and visibility
+        ctx.font = `900 ${clamp(sp(40), 30, 52)}px system-ui, -apple-system, "Noto Sans KR", "Noto Sans JP", sans-serif`;
+        ctx.fillStyle = "#ffffff"; // Brighter white for score
+        ctx.fillText(`${Math.floor(score)}점`, W / 2, layout.field.y + layout.field.h * 0.25);
+
+        // ---- Clean mistakes UI: 3 cards (horizontal row) ----
+        const arr = Array.from(mistakeLogs.values())
+          .sort((a, b) => b.count - a.count)
+          .slice(0, 3);
+
+        const padX = sp(12);
+        const gap = clamp(sp(8), 4, 12);
+        const totalW = layout.field.w - padX * 2;
+        const cardW = (totalW - gap * 2) / 3;
+
+        const cardH = clamp(sp(130), 100, 160);
+
+        // Center vertically in remaining space
+        const totalH = cardH;
+        let startY = layout.field.y + layout.field.h * 0.38;
+        const maxStart = layout.field.y + layout.field.h - totalH - sp(22);
+        startY = Math.min(startY, maxStart);
+        startY = Math.max(startY, layout.field.y + layout.field.h * 0.34);
+
+        // Section label (small)
+        ctx.textAlign = "left";
+        ctx.textBaseline = "top";
+        ctx.fillStyle = "rgba(233,238,248,0.80)";
+        ctx.font = `800 ${clamp(sp(14), 13, 20)}px system-ui, -apple-system, "Noto Sans KR", "Noto Sans JP", sans-serif`;
+        ctx.fillText("오답 노트", layout.field.x + padX, startY - sp(28));
+
+        for (let i = 0; i < 3; i++) {
+          const x = layout.field.x + padX + i * (cardW + gap);
+          const y = startY;
+
+          // card frame
+          ctx.fillStyle = "rgba(255,255,255,0.04)";
+          ctx.strokeStyle = "rgba(233,238,248,0.14)";
+          ctx.lineWidth = 1;
+          roundRect(ctx, x, y, cardW, cardH, sp(12));
+          ctx.fill();
+          ctx.stroke();
+
+          const it = arr[i];
+          const cx = x + cardW / 2;
+
+          if (!it) {
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            ctx.fillStyle = "rgba(233,238,248,0.55)";
+            ctx.font = `700 ${clamp(sp(14), 12, 18)}px system-ui, -apple-system, "Noto Sans KR", "Noto Sans JP", sans-serif`;
+            ctx.fillText("오답 없음", cx, y + cardH / 2);
+            continue;
+          }
+
+          // Always show hiragana big
+          const hira = it.expectedPair?.hira ?? "";
+          const hangul = it.expectedPair?.hangul ?? "";
+          const romaji = it.expectedPair?.romaji ?? "";
+
+          ctx.textAlign = "center";
+          ctx.textBaseline = "middle";
+          ctx.fillStyle = "rgba(233,238,248,0.95)";
+          // Slightly smaller font for narrower cards
+          ctx.font = `900 ${clamp(sp(36), 28, 50)}px system-ui, -apple-system, "Noto Sans JP", "Noto Sans KR", sans-serif`;
+          ctx.fillText(hira, cx, y + cardH * 0.38);
+
+          // Hangul + romaji small under hiragana
+          ctx.fillStyle = "rgba(233,238,248,0.78)";
+          ctx.font = `700 ${clamp(sp(13), 11, 18)}px system-ui, -apple-system, "Noto Sans KR", "Noto Sans JP", sans-serif`;
+          ctx.fillText(`${hangul} · ${romaji}`, cx, y + cardH * 0.68);
+
+          // Tiny footer: what you ate + count (kept subtle)
+          ctx.fillStyle = "rgba(233,238,248,0.55)";
+          ctx.font = `650 ${clamp(sp(11), 10, 15)}px system-ui, -apple-system, "Noto Sans KR", "Noto Sans JP", sans-serif`;
+          ctx.fillText(`오답:${it.eatenText} ×${it.count}`, cx, y + cardH * 0.88);
+        }
+
+        // ---- Game Over buttons: row1=재도전, row2=시작화면+문자도감 ----
+        const btnH = clamp(sp(44), 38, 58);
+        const btnGap = clamp(sp(10), 6, 16);
+
+        // Row 1: 재도전 (wide, centered)
+        const retryW = clamp(sp(190), 160, 260);
+        const btnBaseY = layout.field.y + layout.field.h - sp(50) - btnH - btnGap;
+        ui.retryBtn = { x: W / 2 - retryW / 2, y: btnBaseY, w: retryW, h: btnH };
+
+        // Row 2: 시작화면 + 문자 도감 (side by side)
+        const halfW = (retryW - btnGap) / 2;
+        const row2Y = btnBaseY + btnH + btnGap;
+        ui.homeBtn = { x: W / 2 - retryW / 2, y: row2Y, w: halfW, h: btnH };
+        ui.overDictBtn = { x: W / 2 - retryW / 2 + halfW + btnGap, y: row2Y, w: halfW, h: btnH };
+
+        const btnLabels = [
+          { rect: ui.retryBtn, text: "재도전" },
+          { rect: ui.homeBtn, text: "시작화면" },
+          { rect: ui.overDictBtn, text: "문자 도감" },
+        ];
+
+        const btnFont = `800 ${clamp(sp(14), 12, 20)}px system-ui, -apple-system, "Noto Sans KR", "Noto Sans JP", sans-serif`;
+        for (const btn of btnLabels) {
+          ctx.fillStyle = "rgba(255,255,255,0.06)";
+          ctx.strokeStyle = "rgba(233,238,248,0.18)";
+          ctx.lineWidth = 1;
+          roundRect(ctx, btn.rect.x, btn.rect.y, btn.rect.w, btn.rect.h, sp(12));
+          ctx.fill(); ctx.stroke();
+
+          ctx.textAlign = "center";
+          ctx.textBaseline = "middle";
+          ctx.fillStyle = "rgba(233,238,248,0.92)";
+          ctx.font = btnFont;
+          ctx.fillText(btn.text, btn.rect.x + btn.rect.w / 2, btn.rect.y + btn.rect.h / 2);
+        }
+
+        renderJoystick();
+      }
+
+      // ---------------------------
+      // DICTIONARY PAGE
+      // ---------------------------
+      let dictScrollPointerId = null;
+      let dictScrollLastY = 0;
+
+      function renderDict() {
+        ctx.fillStyle = COLOR_BG;
+        ctx.fillRect(0, 0, W, H);
+
+        const pairs = dictMode === "kata" ? KATA_PAIRS : HIRA_PAIRS;
+        const padX = sp(12);
+        const gap = clamp(sp(8), 4, 12);
+        const totalW = W - padX * 2;
+        const cardW = (totalW - gap * 2) / 3;
+        const cardH = clamp(sp(110), 80, 140);
+
+        // Fixed top area: tabs
+        const tabH = clamp(sp(50), 42, 64);
+        const tabW = clamp(sp(100), 80, 140);
+        const tabGap = sp(10);
+        const totalTabW = tabW * 2 + tabGap;
+        const tabX = W / 2 - totalTabW / 2;
+        const tabY = sp(12);
+
+        ui.dictHiraTab = { x: tabX, y: tabY, w: tabW, h: tabH };
+        ui.dictKataTab = { x: tabX + tabW + tabGap, y: tabY, w: tabW, h: tabH };
+
+        // Fixed bottom area: exit button
+        const exitH = clamp(sp(48), 40, 60);
+        const exitW = clamp(sp(160), 130, 220);
+        const exitY = H - sp(16) - exitH;
+        ui.dictExitBtn = { x: W / 2 - exitW / 2, y: exitY, w: exitW, h: exitH };
+
+        // Scrollable content area
+        const contentTop = tabY + tabH + sp(10);
+        const contentBottom = exitY - sp(10);
+        const contentH = contentBottom - contentTop;
+
+        // Calculate total rows
+        const rows = Math.ceil(pairs.length / 3);
+        const totalContentH = rows * (cardH + gap) - gap;
+        const maxScroll = Math.max(0, totalContentH - contentH);
+        dictScrollY = clamp(dictScrollY, 0, maxScroll);
+
+        // Clip to content area
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(0, contentTop, W, contentH);
+        ctx.clip();
+
+        for (let i = 0; i < pairs.length; i++) {
+          const col = i % 3;
+          const row = Math.floor(i / 3);
+          const x = padX + col * (cardW + gap);
+          const y = contentTop + row * (cardH + gap) - dictScrollY;
+
+          // Skip if out of view
+          if (y + cardH < contentTop - 10 || y > contentBottom + 10) continue;
+
+          // Card frame
+          ctx.fillStyle = "rgba(255,255,255,0.04)";
+          ctx.strokeStyle = "rgba(233,238,248,0.14)";
+          ctx.lineWidth = 1;
+          roundRect(ctx, x, y, cardW, cardH, sp(12));
+          ctx.fill();
+          ctx.stroke();
+
+          const p = pairs[i];
+          const cx = x + cardW / 2;
+
+          // Japanese character big
+          ctx.textAlign = "center";
+          ctx.textBaseline = "middle";
+          ctx.fillStyle = "rgba(233,238,248,0.95)";
+          ctx.font = `900 ${clamp(sp(32), 24, 44)}px system-ui, -apple-system, "Noto Sans JP", "Noto Sans KR", sans-serif`;
+          ctx.fillText(p.hira, cx, y + cardH * 0.40);
+
+          // Hangul + romaji
+          ctx.fillStyle = "rgba(233,238,248,0.78)";
+          ctx.font = `700 ${clamp(sp(13), 11, 18)}px system-ui, -apple-system, "Noto Sans KR", "Noto Sans JP", sans-serif`;
+          ctx.fillText(`${p.hangul} · ${p.romaji}`, cx, y + cardH * 0.75);
+        }
+
+        ctx.restore();
+
+        // Draw tabs (on top of content)
+        const tabFont = `800 ${clamp(sp(16), 14, 22)}px system-ui, -apple-system, "Noto Sans KR", "Noto Sans JP", sans-serif`;
+        // Hira tab
+        ctx.fillStyle = dictMode === "hira" ? "rgba(233,238,248,0.14)" : "rgba(255,255,255,0.04)";
+        ctx.strokeStyle = dictMode === "hira" ? "rgba(233,238,248,0.32)" : "rgba(233,238,248,0.12)";
+        ctx.lineWidth = 1;
+        roundRect(ctx, ui.dictHiraTab.x, ui.dictHiraTab.y, ui.dictHiraTab.w, ui.dictHiraTab.h, sp(12));
+        ctx.fill(); ctx.stroke();
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillStyle = dictMode === "hira" ? "rgba(233,238,248,0.95)" : "rgba(233,238,248,0.55)";
+        ctx.font = tabFont;
+        ctx.fillText("히라가나", ui.dictHiraTab.x + ui.dictHiraTab.w / 2, ui.dictHiraTab.y + ui.dictHiraTab.h / 2);
+
+        // Kata tab
+        ctx.fillStyle = dictMode === "kata" ? "rgba(233,238,248,0.14)" : "rgba(255,255,255,0.04)";
+        ctx.strokeStyle = dictMode === "kata" ? "rgba(233,238,248,0.32)" : "rgba(233,238,248,0.12)";
+        roundRect(ctx, ui.dictKataTab.x, ui.dictKataTab.y, ui.dictKataTab.w, ui.dictKataTab.h, sp(12));
+        ctx.fill(); ctx.stroke();
+        ctx.fillStyle = dictMode === "kata" ? "rgba(233,238,248,0.95)" : "rgba(233,238,248,0.55)";
+        ctx.font = tabFont;
+        ctx.fillText("카타카나", ui.dictKataTab.x + ui.dictKataTab.w / 2, ui.dictKataTab.y + ui.dictKataTab.h / 2);
+
+        // Exit button
+        ctx.fillStyle = "rgba(255,255,255,0.06)";
+        ctx.strokeStyle = "rgba(233,238,248,0.18)";
+        ctx.lineWidth = 1;
+        roundRect(ctx, ui.dictExitBtn.x, ui.dictExitBtn.y, ui.dictExitBtn.w, ui.dictExitBtn.h, sp(14));
+        ctx.fill(); ctx.stroke();
+        ctx.fillStyle = "rgba(233,238,248,0.92)";
+        ctx.font = `900 ${clamp(sp(18), 16, 26)}px system-ui, -apple-system, "Noto Sans KR", "Noto Sans JP", sans-serif`;
+        ctx.fillText("나가기", ui.dictExitBtn.x + ui.dictExitBtn.w / 2, ui.dictExitBtn.y + ui.dictExitBtn.h / 2);
+      }
+
+      function clearAllBullets() {
+        bullets.length = 0;
+        spawnAcc = 0;
+      }
+
+      function clearBulletsNearPlayer() {
+        let clearedCount = 0;
+        for (let i = bullets.length - 1; i >= 0; i--) {
+          const b = bullets[i];
+          const d = Math.hypot(b.x - player.x, b.y - player.y);
+          if (d <= auraRadius) {
+            bullets.splice(i, 1);
+            clearedCount++;
+          }
+        }
+        return clearedCount;
+      }
+
+      function onEatCorrect(pair) {
+        // Base score for correct answer
+        let gained = 120;
+
+        auraT = auraDuration;
+        // Add bonus for cleared bullets (10 points each)
+        const cleared = clearBulletsNearPlayer();
+        gained += cleared * 10;
+
+        score += gained;
+
+        // hint effect resets when correct is eaten
+        highlightCorrect = false;
+
+        setRandomPlayerChar(player.char);
+      }
+
+      function startInvincibleBlink() {
+        const pp = getPlayerPair();
+        player.blinkA = pp.hangul;
+        player.blinkB = pp.hira;
+
+        player.invincible = true;
+        player.blinkT = 0;
+        player.blinkCount = 0;
+        player.blinkShowAlt = false;
+        player.blinkTotal = player.blinkMax * player.blinkInterval;
+      }
+
+      function addMistakeEvent(evt) {
+        const key = evt.expectedPair.romaji;
+        let entry = mistakeLogs.get(key);
+        if (!entry) {
+          entry = {
+            count: 0,
+            expectedPair: evt.expectedPair,
+            eatenText: evt.eatenText
+          };
+          mistakeLogs.set(key, entry);
+        }
+        entry.count++;
+        entry.eatenText = evt.eatenText;
+      }
+
+      function onHitWrong(evt) {
+        // evt: { playerChar, expectedText, expectedPair, eatenText, eatenPair }
+        lives -= 1;
+        addMistakeEvent(evt);
+        // score deduction removed
+        // score = Math.max(0, score - 80);
+
+        // hit resets hint and clears all bullets
+        highlightCorrect = false;
+        clearAllBullets();
+
+        // also stop player immediately (feels crisp)
+        player.vx = 0;
+        player.vy = 0;
+
+        if (lives <= 0) {
+          state = STATE.OVER;
+          return;
+        }
+
+        // reset speed ramp and spawn rate (quantity)
+        speedTime = 0;
+        timeAlive = 0;
+        startInvincibleBlink();
+      }
+
+      // ---------------------------
+      // 5) LAYOUT / RESIZE (3:2 portrait)
+      // ---------------------------
+      function updateJoystickLayout() {
+        const yTop = layout.field.y + layout.field.h + layout.pad;
+        const areaH = H - yTop;
+
+        joy.baseR = clamp(sp(56), 46, 78);
+        joy.knobR = clamp(Math.round(joy.baseR * 0.42), 18, 34);
+
+        joy.area.x = 0;
+        joy.area.y = yTop;
+        joy.area.w = W;
+        joy.area.h = areaH;
+
+        // joystick x rule: center on phones, lock from right when wider
+        const PHONE_W = 420;
+        const centerX = W / 2;
+        const lockFromRight = PHONE_W / 2;
+        const lockedX = W - lockFromRight;
+
+        let targetX = (W <= PHONE_W) ? centerX : lockedX;
+        const minX = layout.pad + joy.baseR;
+        const maxX = W - layout.pad - joy.baseR;
+        targetX = clamp(targetX, minX, maxX);
+
+        joy.baseX = targetX;
+        joy.baseY = yTop + areaH / 2;
+
+        if (!joy.active) {
+          joy.knobX = joy.baseX;
+          joy.knobY = joy.baseY;
+        }
+
+        // scale player + aura (proportional to field width, no upper clamp)
+        player.r = Math.round(layout.field.w * 0.068);
+
+        // speed proportional to field width
+        player.speed = layout.field.w * 0.50;
+
+        auraRadius = layout.field.w * 0.50;
+      }
+
+      function resize() {
+        const vw = (window.visualViewport?.width ?? innerWidth);
+        const vh = (window.visualViewport?.height ?? innerHeight);
+
+        W = Math.floor(vw);
+        H = Math.floor(vh);
+
+        const dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
+        canvas.width = Math.floor(W * dpr);
+        canvas.height = Math.floor(H * dpr);
+        canvas.style.width = W + "px";
+        canvas.style.height = H + "px";
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+        layout.controlH = clamp(Math.round(H * 0.26), 160, 270);
+
+        const usableH = H - layout.controlH - layout.pad * 2;
+        const usableW = W - layout.pad * 2;
+
+        // w:h = 2:3 => h = 1.5w
+        const w = Math.max(260, Math.min(usableW, usableH / 1.5));
+        const h = w * 1.5;
+
+        layout.field.w = Math.floor(w);
+        layout.field.h = Math.floor(h);
+        layout.field.x = Math.floor((W - layout.field.w) / 2);
+        layout.field.y = layout.pad;
+
+        updateJoystickLayout();
+      }
+
+      addEventListener("resize", resize);
+      if (window.visualViewport) window.visualViewport.addEventListener("resize", resize);
+      resize();
+
+      // ---------------------------
+      // 6) JOYSTICK INPUT (responsive curve)
+      // ---------------------------
+      function resetJoystick() {
+        joy.active = false;
+        joy.pointerId = null;
+        joy.dx = 0; joy.dy = 0;
+        joy.knobX = joy.baseX;
+        joy.knobY = joy.baseY;
+      }
+
+      function setJoystickFromPointer(sx, sy) {
+        const dx = sx - joy.baseX;
+        const dy = sy - joy.baseY;
+        const dist = Math.hypot(dx, dy) || 1;
+        const max = joy.baseR - joy.knobR;
+
+        const t = Math.min(1, dist / max);
+        const kx = joy.baseX + (dx / dist) * max * t;
+        const ky = joy.baseY + (dy / dist) * max * t;
+
+        joy.knobX = kx;
+        joy.knobY = ky;
+
+        let ndx = (kx - joy.baseX) / max;
+        let ndy = (ky - joy.baseY) / max;
+
+        // responsiveness near center
+        const mag = clamp(Math.hypot(ndx, ndy), 0, 1);
+        if (mag > 0.0001) {
+          const curved = Math.pow(mag, 0.70);
+          const s = curved / mag;
+          ndx *= s; ndy *= s;
+        }
+
+        joy.dx = ndx;
+        joy.dy = ndy;
+      }
+
+      function isInJoystickArea(sx, sy) {
+        return sx >= joy.area.x && sx <= joy.area.x + joy.area.w
+          && sy >= joy.area.y && sy <= joy.area.y + joy.area.h;
+      }
+
+      function inRect(px, py, r) {
+        return px >= r.x && px <= r.x + r.w && py >= r.y && py <= r.y + r.h;
+      }
+
+      canvas.addEventListener("pointerdown", (ev) => {
+        ev.preventDefault();
+        const sx = ev.clientX, sy = ev.clientY;
+
+        if (state === STATE.START) {
+          if (inRect(sx, sy, ui.helpBtn)) {
+            ui.helpOpen = !ui.helpOpen;
+            return;
+          }
+          if (ui.helpOpen && inRect(sx, sy, ui.helpPanel) === false) {
+            ui.helpOpen = false;
+            return;
+          }
+          if (inRect(sx, sy, ui.hiraBtn)) {
+            switchMode("hira");
+            return;
+          }
+          if (inRect(sx, sy, ui.kataBtn)) {
+            switchMode("kata");
+            return;
+          }
+          if (inRect(sx, sy, ui.startDictBtn)) {
+            dictScrollY = 0;
+            dictMode = gameMode;
+            state = STATE.DICT;
+            return;
+          }
+          if (inRect(sx, sy, ui.startBtn)) {
+            startGame();
+          }
+          return;
+        }
+
+        if (state === STATE.OVER) {
+          if (inRect(sx, sy, ui.retryBtn)) {
+            startGame();
+          } else if (inRect(sx, sy, ui.homeBtn)) {
+            state = STATE.START;
+          } else if (inRect(sx, sy, ui.overDictBtn)) {
+            dictScrollY = 0;
+            dictMode = gameMode;
+            state = STATE.DICT;
+          }
+          return;
+        }
+
+        if (state === STATE.DICT) {
+          if (inRect(sx, sy, ui.dictHiraTab)) {
+            dictMode = "hira";
+            dictScrollY = 0;
+          } else if (inRect(sx, sy, ui.dictKataTab)) {
+            dictMode = "kata";
+            dictScrollY = 0;
+          } else if (inRect(sx, sy, ui.dictExitBtn)) {
+            state = STATE.START;
+          } else {
+            // Start scroll drag
+            dictScrollPointerId = ev.pointerId;
+            dictScrollLastY = sy;
+            canvas.setPointerCapture(ev.pointerId);
+          }
+          return;
+        }
+
+        if (isInJoystickArea(sx, sy) && !joy.active) {
+          joy.active = true;
+          joy.pointerId = ev.pointerId;
+          canvas.setPointerCapture(ev.pointerId);
+          setJoystickFromPointer(sx, sy);
+        }
+      }, { passive: false });
+
+      canvas.addEventListener("pointermove", (ev) => {
+        if (state === STATE.DICT && ev.pointerId === dictScrollPointerId) {
+          ev.preventDefault();
+          const dy = ev.clientY - dictScrollLastY;
+          dictScrollY -= dy;
+          dictScrollLastY = ev.clientY;
+          return;
+        }
+        if (state !== STATE.PLAY) return;
+        if (!joy.active || ev.pointerId !== joy.pointerId) return;
+        ev.preventDefault();
+        setJoystickFromPointer(ev.clientX, ev.clientY);
+      }, { passive: false });
+
+      canvas.addEventListener("pointerup", (ev) => {
+        if (ev.pointerId === dictScrollPointerId) { dictScrollPointerId = null; }
+        if (ev.pointerId === joy.pointerId) resetJoystick();
+      });
+      canvas.addEventListener("pointercancel", (ev) => {
+        if (ev.pointerId === dictScrollPointerId) { dictScrollPointerId = null; }
+        if (ev.pointerId === joy.pointerId) resetJoystick();
+      });
+
+      // ---------------------------
+      // 7) SPAWN (adjusted frequencies)
+      // ---------------------------
+      function spawnBullet() {
+        if (bullets.length >= maxBullets) return;
+
+        const Fw = layout.field.w;
+        const Fh = layout.field.h;
+
+        // ✅ ? 빈도: 이전(0.05/0.02)의 1/3
+        const hintChance = highlightCorrect ? 0.002 : 0.03;
+        const isHint = Math.random() < hintChance;
+
+        let pair;
+        let text;
+
+        if (isHint) {
+          pair = null;
+          text = "?";
+        } else {
+          // ✅ 정답 빈도
+          const correctPair = getPlayerPair();
+          const correctChance = 0.25;
+
+          if (Math.random() < correctChance) {
+            pair = correctPair;
+          } else {
+            do { pair = choice(activePairs); } while (pair === correctPair);
+          }
+
+          const wantHiraBullets = isPlayerHangul();
+          text = wantHiraBullets ? pair.hira : pair.hangul;
+        }
+
+        // Spawn from random edge
+        const edge = randInt(4);
+        const pad = 12;
+        let x, y;
+        if (edge === 0) { x = Math.random() * Fw; y = -pad; }
+        else if (edge === 1) { x = Fw + pad; y = Math.random() * Fh; }
+        else if (edge === 2) { x = Math.random() * Fw; y = Fh + pad; }
+        else { x = -pad; y = Math.random() * Fh; }
+
+        // Move toward player
+        const dx = (player.x - x);
+        const dy = (player.y - y);
+        const dist = Math.max(0.001, Math.hypot(dx, dy));
+        const dirx = dx / dist, diry = dy / dist;
+
+        const sizeScale = Fw / 320;
+        const base = (60 + Math.min(260, speedTime * 0.66)) * sizeScale;
+        const jitter = (Math.random() * 26 - 13) * sizeScale;
+        const speed = base + jitter;
+
+        const r = Math.round(Fw * 0.045);
+        bullets.push({ x, y, vx: dirx * speed, vy: diry * speed, text, pair, r, isHint });
+      }
+
+      function startGame() {
+        state = STATE.PLAY;
+        ui.helpOpen = false;
+
+        bullets.length = 0;
+        mistakeLogs.clear();
+
+        lives = 3;
+        score = 0;
+        timeAlive = 0;
+        speedTime = 0;
+
+        spawnAcc = 0;
+        // baseline; tick will update
+        spawnRate = 0.8;
+        maxBullets = 90;
+
+        auraT = 0;
+        player.invincible = false;
+
+        highlightCorrect = false;
+
+        const Fw = layout.field.w;
+        const Fh = layout.field.h;
+        player.x = Fw * 0.5;
+        player.y = Fh * 0.68;
+        player.vx = 0;
+        player.vy = 0;
+
+        setRandomPlayerChar(null);
+        resetJoystick();
+      }
+
+      // ---------------------------
+      // 8) RENDER
+      // ---------------------------
+      function roundRect(ctx, x, y, w, h, r) {
+        const rr = Math.min(r, w / 2, h / 2);
+        ctx.beginPath();
+        ctx.moveTo(x + rr, y);
+        ctx.arcTo(x + w, y, x + w, y + h, rr);
+        ctx.arcTo(x + w, y + h, x, y + h, rr);
+        ctx.arcTo(x, y + h, x, y, rr);
+        ctx.arcTo(x, y, x + w, y, rr);
+        ctx.closePath();
+      }
+
+      function drawTextWithStroke(text, x, y, fontPx, fill, stroke, strokeW = 2) {
+        ctx.font = `900 ${fontPx}px system-ui, -apple-system, "Noto Sans KR", "Noto Sans JP", "Apple SD Gothic Neo", sans-serif`;
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.lineWidth = strokeW;
+        ctx.strokeStyle = stroke;
+        ctx.fillStyle = fill;
+        ctx.strokeText(text, x, y);
+        ctx.fillText(text, x, y);
+      }
+
+      function renderFieldFrame() {
+        ctx.strokeStyle = "rgba(233,238,248,0.10)";
+        ctx.lineWidth = 1;
+        roundRect(ctx, layout.field.x, layout.field.y, layout.field.w, layout.field.h, sp(16));
+        ctx.stroke();
+      }
+
+      function renderHUD() {
+        const pad = sp(12);
+
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(layout.field.x, layout.field.y, layout.field.w, layout.field.h);
+        ctx.clip();
+
+        ctx.fillStyle = "rgba(233,238,248,0.92)";
+        ctx.font = `700 ${clamp(sp(14), 13, 20)}px system-ui, -apple-system, "Noto Sans KR", "Noto Sans JP", sans-serif`;
+        ctx.textAlign = "left";
+        ctx.textBaseline = "top";
+
+        ctx.fillText(`점수: ${Math.floor(score)}`, layout.field.x + pad, layout.field.y + pad);
+        ctx.fillText(`목숨: ${"●".repeat(lives)}${"○".repeat(Math.max(0, 3 - lives))}`, layout.field.x + pad, layout.field.y + pad + sp(20));
+
+        ctx.restore();
+      }
+
+      function renderJoystick() {
+        const yTop = joy.area.y;
+        ctx.fillStyle = "rgba(255,255,255,0.02)";
+        ctx.fillRect(0, yTop, W, joy.area.h);
+
+        ctx.beginPath();
+        ctx.arc(joy.baseX, joy.baseY, joy.baseR, 0, Math.PI * 2);
+        ctx.fillStyle = "rgba(233,238,248,0.06)";
+        ctx.fill();
+        ctx.strokeStyle = "rgba(233,238,248,0.14)";
+        ctx.lineWidth = 1;
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.arc(joy.knobX, joy.knobY, joy.knobR, 0, Math.PI * 2);
+        ctx.fillStyle = "rgba(233,238,248,0.18)";
+        ctx.fill();
+        ctx.strokeStyle = "rgba(233,238,248,0.24)";
+        ctx.stroke();
+      }
+
+      function computeStartUIRects() {
+        const centerX = W / 2;
+        const baseY = layout.field.y + layout.field.h * 0.60;
+
+        // Mode selector buttons (side by side)
+        const modeW = clamp(sp(100), 80, 140);
+        const modeH = clamp(sp(44), 38, 58);
+        const modeGap = sp(10);
+        const totalModeW = modeW * 2 + modeGap;
+        const modeX = centerX - totalModeW / 2;
+        const modeY = layout.field.y + layout.field.h * 0.42;
+        ui.hiraBtn = { x: modeX, y: modeY, w: modeW, h: modeH };
+        ui.kataBtn = { x: modeX + modeW + modeGap, y: modeY, w: modeW, h: modeH };
+
+        const bw = clamp(sp(190), 160, 260);
+        const bh = clamp(sp(56), 48, 70);
+        const bx = centerX - bw / 2;
+        const by = baseY - bh / 2;
+        ui.startBtn = { x: bx, y: by, w: bw, h: bh };
+
+        const hw = clamp(sp(150), 130, 230);
+        const hh = clamp(sp(44), 38, 58);
+        const hx = centerX - hw / 2;
+        const hy = by + bh + sp(14);
+        ui.helpBtn = { x: hx, y: hy, w: hw, h: hh };
+
+        const pw = Math.min(layout.field.w - sp(26), sp(560));
+        const ph = Math.min(layout.field.h * 0.55, sp(420));
+        const px = W / 2 - pw / 2;
+        const py = layout.field.y + layout.field.h * 0.16;
+        ui.helpPanel = { x: px, y: py, w: pw, h: ph };
+
+        // Dict button on start screen
+        const dw = clamp(sp(150), 130, 230);
+        const dh = clamp(sp(44), 38, 58);
+        const dx = centerX - dw / 2;
+        const dy2 = hy + hh + sp(14);
+        ui.startDictBtn = { x: dx, y: dy2, w: dw, h: dh };
+      }
+
+
+
+
+
+
+
+
+      function renderHelpPanel() {
+        const p = ui.helpPanel;
+
+        ctx.fillStyle = "rgba(0,0,0,0.45)";
+        ctx.fillRect(0, 0, W, H);
+
+        ctx.fillStyle = "#1e232e"; // Solid background (opacity 100%)
+        ctx.strokeStyle = "rgba(233,238,248,0.18)";
+        ctx.lineWidth = 1;
+        roundRect(ctx, p.x, p.y, p.w, p.h, sp(16));
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.fillStyle = "rgba(233,238,248,0.92)";
+        ctx.font = `900 ${clamp(sp(16), 14, 22)}px system-ui, -apple-system, "Noto Sans KR", "Noto Sans JP", sans-serif`;
+        ctx.textAlign = "left";
+        ctx.textBaseline = "top";
+        ctx.fillText("도움말", p.x + sp(14), p.y + sp(12));
+
+        ctx.fillStyle = COLOR_TEXT_DIM;
+        ctx.font = `650 ${clamp(sp(14), 13, 20)}px system-ui, -apple-system, "Noto Sans KR", "Noto Sans JP", sans-serif`;
+
+        const lines = [
+          "• 짝이 되는 글자만 먹기",
+          "• 틀리면 목숨 -1",
+          "• ?(힌트): 정답 연두색 표시",
+          "",
+          "바깥을 탭해 도움말 닫기"
+        ];
+
+        let y = p.y + sp(48);
+        for (const s of lines) {
+          ctx.fillText(s, p.x + sp(14), y);
+          y += sp(22);
+        }
+      }
+
+      function renderStart() {
+        ctx.fillStyle = COLOR_BG;
+        ctx.fillRect(0, 0, W, H);
+
+        ctx.fillStyle = "rgba(255,255,255,0.01)";
+        ctx.fillRect(layout.field.x, layout.field.y, layout.field.w, layout.field.h);
+        renderFieldFrame();
+
+        computeStartUIRects();
+
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillStyle = "rgba(233,238,248,0.95)";
+        ctx.font = `900 ${clamp(sp(34), 28, 46)}px system-ui, -apple-system, "Noto Sans KR", "Noto Sans JP", sans-serif`;
+        ctx.fillText(gameMode === "kata" ? "카타카나 특훈" : "히라가나 특훈", W / 2, layout.field.y + layout.field.h * 0.30);
+
+        // Mode selector buttons
+        const modeFont = `800 ${clamp(sp(16), 14, 22)}px system-ui, -apple-system, "Noto Sans KR", "Noto Sans JP", sans-serif`;
+        // Hiragana button
+        ctx.fillStyle = gameMode === "hira" ? "rgba(233,238,248,0.14)" : "rgba(255,255,255,0.04)";
+        ctx.strokeStyle = gameMode === "hira" ? "rgba(233,238,248,0.32)" : "rgba(233,238,248,0.12)";
+        ctx.lineWidth = 1;
+        roundRect(ctx, ui.hiraBtn.x, ui.hiraBtn.y, ui.hiraBtn.w, ui.hiraBtn.h, sp(12));
+        ctx.fill(); ctx.stroke();
+        ctx.fillStyle = gameMode === "hira" ? "rgba(233,238,248,0.95)" : "rgba(233,238,248,0.55)";
+        ctx.font = modeFont;
+        ctx.fillText("히라가나", ui.hiraBtn.x + ui.hiraBtn.w / 2, ui.hiraBtn.y + ui.hiraBtn.h / 2);
+        // Katakana button
+        ctx.fillStyle = gameMode === "kata" ? "rgba(233,238,248,0.14)" : "rgba(255,255,255,0.04)";
+        ctx.strokeStyle = gameMode === "kata" ? "rgba(233,238,248,0.32)" : "rgba(233,238,248,0.12)";
+        roundRect(ctx, ui.kataBtn.x, ui.kataBtn.y, ui.kataBtn.w, ui.kataBtn.h, sp(12));
+        ctx.fill(); ctx.stroke();
+        ctx.fillStyle = gameMode === "kata" ? "rgba(233,238,248,0.95)" : "rgba(233,238,248,0.55)";
+        ctx.font = modeFont;
+        ctx.fillText("카타카나", ui.kataBtn.x + ui.kataBtn.w / 2, ui.kataBtn.y + ui.kataBtn.h / 2);
+
+        // Start button
+        ctx.fillStyle = "rgba(255,255,255,0.06)";
+        ctx.strokeStyle = "rgba(233,238,248,0.18)";
+        ctx.lineWidth = 1;
+        roundRect(ctx, ui.startBtn.x, ui.startBtn.y, ui.startBtn.w, ui.startBtn.h, sp(16));
+        ctx.fill(); ctx.stroke();
+
+        ctx.fillStyle = "rgba(233,238,248,0.92)";
+        ctx.font = `900 ${clamp(sp(22), 18, 30)}px system-ui, -apple-system, "Noto Sans KR", "Noto Sans JP", sans-serif`;
+        ctx.fillText("시작", W / 2, ui.startBtn.y + ui.startBtn.h / 2);
+
+        // Help button
+        ctx.fillStyle = "rgba(255,255,255,0.04)";
+        ctx.strokeStyle = "rgba(233,238,248,0.14)";
+        roundRect(ctx, ui.helpBtn.x, ui.helpBtn.y, ui.helpBtn.w, ui.helpBtn.h, sp(14));
+        ctx.fill(); ctx.stroke();
+
+        ctx.fillStyle = "rgba(233,238,248,0.88)";
+        ctx.font = `800 ${clamp(sp(18), 16, 26)}px system-ui, -apple-system, "Noto Sans KR", "Noto Sans JP", sans-serif`;
+        ctx.fillText(ui.helpOpen ? "도움말 닫기" : "도움말", W / 2, ui.helpBtn.y + ui.helpBtn.h / 2);
+
+        // Dict button
+        ctx.fillStyle = "rgba(255,255,255,0.04)";
+        ctx.strokeStyle = "rgba(233,238,248,0.14)";
+        roundRect(ctx, ui.startDictBtn.x, ui.startDictBtn.y, ui.startDictBtn.w, ui.startDictBtn.h, sp(14));
+        ctx.fill(); ctx.stroke();
+
+        ctx.fillStyle = "rgba(233,238,248,0.88)";
+        ctx.font = `800 ${clamp(sp(18), 16, 26)}px system-ui, -apple-system, "Noto Sans KR", "Noto Sans JP", sans-serif`;
+        ctx.fillText("문자 도감", W / 2, ui.startDictBtn.y + ui.startDictBtn.h / 2);
+
+        renderJoystick();
+        if (ui.helpOpen) renderHelpPanel();
+      }
+
+      function renderPlay() {
+        ctx.fillStyle = COLOR_BG;
+        ctx.fillRect(0, 0, W, H);
+
+        ctx.fillStyle = "rgba(255,255,255,0.01)";
+        ctx.fillRect(layout.field.x, layout.field.y, layout.field.w, layout.field.h);
+        renderFieldFrame();
+
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(layout.field.x, layout.field.y, layout.field.w, layout.field.h);
+        ctx.clip();
+
+        // aura
+        if (auraT > 0) {
+          const t = auraT / auraDuration;
+          const ps = toScreen(player.x, player.y);
+          ctx.beginPath();
+          ctx.arc(ps.x, ps.y, auraRadius * (1 - t * 0.15), 0, Math.PI * 2);
+          ctx.strokeStyle = `rgba(233,238,248,${0.08 + 0.12 * t})`;
+          ctx.lineWidth = 2;
+          ctx.stroke();
+        }
+
+        const correctText = currentCorrectText();
+
+        const bulletFont = clamp(sp(30), 24, 46);
+        for (const b of bullets) {
+          const s = toScreen(b.x, b.y);
+
+          const isCorrectNow = (!b.isHint && b.text === correctText);
+          let fill = COLOR_TEXT;
+          if (b.isHint) fill = "rgba(255,255,255,0.92)";
+          else if (highlightCorrect && isCorrectNow) fill = COLOR_HINT_GREEN;
+
+          drawTextWithStroke(b.text, s.x, s.y, bulletFont, fill, COLOR_STROKE, 2);
+        }
+
+        // player
+        const ps = toScreen(player.x, player.y);
+        const alpha = player.invincible ? (player.blinkShowAlt ? 0.35 : 1.0) : 1.0;
+
+        ctx.globalAlpha = alpha;
+        ctx.beginPath();
+        ctx.fillStyle = COLOR_PLAYER_FILL;
+        ctx.arc(ps.x, ps.y, player.r, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.globalAlpha = 1.0;
+
+        let pChar = player.char;
+        if (player.invincible) pChar = player.blinkShowAlt ? player.blinkB : player.blinkA;
+
+        ctx.font = `900 ${clamp(Math.round(player.r * 1.10), 20, 36)}px system-ui, -apple-system, "Noto Sans KR", "Noto Sans JP", sans-serif`;
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillStyle = COLOR_PLAYER_TEXT;
+        ctx.fillText(pChar, ps.x, ps.y);
+
+        if (player.invincible) {
+          const pulse = 1 + 0.08 * Math.sin(performance.now() * 0.02);
+          ctx.beginPath();
+          ctx.arc(ps.x, ps.y, player.r * 1.25 * pulse, 0, Math.PI * 2);
+          ctx.strokeStyle = "rgba(233,238,248,0.32)";
+          ctx.lineWidth = 2;
+          ctx.stroke();
+        }
+
+        ctx.restore();
+
+        renderHUD();
+        renderJoystick();
+      }
+
+      function render() {
+        if (state === STATE.START) renderStart();
+        else if (state === STATE.PLAY) renderPlay();
+        else if (state === STATE.DICT) renderDict();
+        else renderOver();
+      }
+
+      // ---------------------------
+      // 9) UPDATE LOOP
+      // ---------------------------
+      let lastT = performance.now();
+      function tick(now) {
+        const dt = Math.min(0.033, (now - lastT) / 1000);
+        lastT = now;
+
+        if (state === STATE.PLAY) {
+          timeAlive += dt;
+
+          // Allow spawn only after blinkCount >= 4
+          const allowSpawn = !(player.invincible && player.blinkCount < 4);
+          if (allowSpawn) speedTime += dt;
+
+          // movement uses these, and so does areaScale
+          const Fw = layout.field.w;
+          const Fh = layout.field.h;
+
+          // ✅ total bullets: scaled by field area for consistent density
+          const areaScale = (Fw * Fh) / (320 * 480);
+          spawnRate = Math.min(5.0 * areaScale, (0.8 + timeAlive * 0.04) * areaScale);
+          maxBullets = Math.floor(Math.min(147, 60 + Math.floor(timeAlive * 1.0)) * areaScale);
+
+          if (!allowSpawn) {
+            if (bullets.length) bullets.length = 0;
+            spawnAcc = 0;
+          } else {
+            spawnAcc += dt * spawnRate;
+            while (spawnAcc >= 1) { spawnAcc -= 1; spawnBullet(); }
+          }
+
+          // movement: slower max speed, faster response
+
+          const mag = clamp(Math.hypot(joy.dx, joy.dy), 0, 1);
+
+          const targetVx = joy.dx * player.speed * mag;
+          const targetVy = joy.dy * player.speed * mag;
+
+          // ✅ crisp response while moving slower
+          const accel = 22;
+          const stopFriction = 26;
+
+          if (mag > 0.02) {
+            const a = (1 - Math.exp(-accel * dt));
+            player.vx += (targetVx - player.vx) * a;
+            player.vy += (targetVy - player.vy) * a;
+          } else {
+            const f = Math.exp(-stopFriction * dt);
+            player.vx *= f;
+            player.vy *= f;
+          }
+
+          player.x += player.vx * dt;
+          player.y += player.vy * dt;
+
+          player.x = clamp(player.x, player.r, Fw - player.r);
+          player.y = clamp(player.y, player.r, Fh - player.r);
+
+          // invincible blink
+          if (player.invincible) {
+            player.blinkT += dt;
+            const toggles = Math.floor(player.blinkT / player.blinkInterval);
+            if (toggles > player.blinkCount) {
+              player.blinkCount = toggles;
+              player.blinkShowAlt = !player.blinkShowAlt;
+            }
+            if (player.blinkT >= player.blinkTotal) {
+              player.invincible = false;
+              setRandomPlayerChar(player.char);
+            }
+          }
+
+          if (auraT > 0) auraT = Math.max(0, auraT - dt);
+          if (auraT > 0) {
+            clearBulletsNearPlayer();
+          }
+          // bullets update + collision
+          const correctText = currentCorrectText();
+          for (let i = bullets.length - 1; i >= 0; i--) {
+            const b = bullets[i];
+            if (!b) continue;
+
+            b.x += b.vx * dt;
+            b.y += b.vy * dt;
+
+            if (b.x < -80 || b.x > Fw + 80 || b.y < -80 || b.y > Fh + 80) {
+              bullets.splice(i, 1);
+              continue;
+            }
+
+            const d = Math.hypot(b.x - player.x, b.y - player.y);
+            if (d <= b.r + player.r) {
+              bullets.splice(i, 1);
+
+              if (b.isHint) {
+                highlightCorrect = true;
+                continue;
+              }
+
+              const isCorrect = (b.text === correctText);
+              if (isCorrect) {
+                onEatCorrect(b.pair);
+              } else if (!player.invincible) {
+                onHitWrong({ playerChar: player.char, expectedPair: getPlayerPair(), expectedText: correctText, eatenPair: b.pair, eatenText: b.text });
+                break; // onHitWrong clears bullets
+              }
+            }
+          }
+
+          // Reduced passive score gain (1/4 of previous)
+          score += dt * 2;
+        }
+
+        render();
+        requestAnimationFrame(tick);
+      }
+
+      resetJoystick();
+      requestAnimationFrame(tick);
+    })();
+  </script>
+</body>
+
+</html>
